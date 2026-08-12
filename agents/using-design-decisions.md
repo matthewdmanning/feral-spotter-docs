@@ -16,7 +16,7 @@ Never change a `design-decisions/` file unless the user has explicitly confirmed
 
 ## Before writing or editing a file here
 
-Read `docs/design-decisions/design-decision-template.md` first, if you haven't already this session. Every design-decisions file follows that structure (Context / Design Specifications / Reason) — no dates, change history, implementation detail, filenames, commit/PR references, or analysis.
+Read [[templates/design-decision-template|design-decision-template.md]] first, if you haven't already this session. Every design-decisions file follows that structure (Context / Design Specifications / Reason) — no dates, change history, implementation detail, filenames, commit/PR references, or analysis.
 
 ## What belongs in a design-decisions file
 
