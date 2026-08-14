@@ -18,7 +18,7 @@ The Map picker is built on **`expo-maps`** (`GoogleMaps`/`AppleMaps` native view
 
 - **`react-native-geolocation-services`** for the fix — rejected: `expo-location` (already installed) covers the single-fix need in this managed-Expo app with no extra native config.
 - **`react-native-maps`** for the map — rejected in favour of first-party `expo-maps`, which matches the all-Expo stack and needs only a config plugin. Accepted trade-off: `expo-maps` is **alpha** in SDK 56; acceptable for the Android-only MVP.
-- **Per-photo location** — rejected: a Submission is one sighting at one place, so one location per Submission is the honest model.
+- **Per-photo location transmission** — accepted: the Submission's location is also written as Cloud Storage custom metadata on every uploaded photo object, alongside photo time, upload time, and a hashed user id.
 - **Embedding GPS into the JPEG's real EXIF** — rejected: adds an EXIF-writing dependency and risks mutating the user's original file, for zero pipeline benefit since the backend consumes the JSON value.
 - **Allowing manual override of a good camera Live fix** — rejected: undermines the reason live GPS is trusted in the first place.
 
