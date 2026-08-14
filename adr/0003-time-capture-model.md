@@ -18,7 +18,7 @@ The **Library pick** entrypoint (sprint:camera, #104) breaks that equivalence �
 - **Always trust EXIF when present, never ask** — accepted; matches ADR 0002's source-based-trust principle (device data over user input, same as GPS's Live fix).
 - **Always require manual entry for Library picks, regardless of EXIF** — rejected: needless friction when EXIF is already correct, and inconsistent with how location seeds from EXIF and lets the user confirm rather than always forcing manual entry.
 - **Leave EXIF-present classified `'device'` with no stored value** — rejected (caught in review before this ADR was finalized): collapses to "record `submitted_at` as the sighting time," which is wrong for any photo not taken moments before submit. `captured_at` exists specifically to avoid this.
-- **Send per-photo EXIF time/location to the backend now** — rejected for MVP: real feature (distance threshold, per-photo transmission, backend clustering), not a UI addition; deferred to Beta as its own effort.
+- **Per-photo time/location transmission** — accepted: the Submission's time is also written as Cloud Storage custom metadata on every uploaded photo object, alongside location, upload time, and a hashed user id.
 
 ## Consequences
 
