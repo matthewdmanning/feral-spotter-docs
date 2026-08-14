@@ -10,3 +10,5 @@ The 2026-07-12 MVP roadmap chose raw `@react-native-google-signin/google-signin`
 
 - **Raw Google Sign-In** (original 7/12 choice) — rejected: no native session persistence story, and the attribution rationale is equally served by Firebase's `uid`.
 - **Firebase JS SDK** (`firebase/auth`) — rejected: weaker auth-persistence guarantees outside a web context; app already ships several native modules via config plugins (vision-camera, permissions, google-signin), so native `@react-native-firebase/auth` fits the existing build shape better.
+
+Extended to Storage in [ADR-0005](0005-firebase-storage-for-uploads.md) (photo uploads via `@react-native-firebase/storage`).
