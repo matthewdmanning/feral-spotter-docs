@@ -32,3 +32,10 @@ Check that PostHog analytics only fires with consent (unchecking analytics-conse
   had to reopen it).
 - (Established 2026-08-09, Pixel 7 physical device, branch `main` @
   `780da4606c396fbdb5fbe7752c189a72aedbfe1a`.)
+- `expo run:android` builds only the ABI(s) of whatever device is connected
+  *when the build starts* (e.g. `x86_64` for an emulator), then fails to
+  install with `INSTALL_FAILED_NO_MATCHING_ABIS` on a different-ABI target
+  (e.g. `arm64-v8a` physical devices). If the target device changes
+  mid-build (emulator closed, physical device connected), rebuild rather
+  than reinstalling the existing APK. Check the connected device's ABI
+  first with `adb shell getprop ro.product.cpu.abi`.
