@@ -27,3 +27,9 @@ Existing pattern (`useCatSubmit.ts`'s `handleReset`, `useAnnotateStateMachine.ts
 ## Status / warning indicators
 
 Inline status pairs icon + label, not a modal: `AlertCircle` (warning color) when a value needs attention, `CheckCircle` (success color) when resolved, each with an `accessibilityLabel` describing state and available action (see `create/index.tsx`'s location/time status row). Tapping the icon is only enabled while the warning state is active.
+
+## Home entrypoint buttons
+
+Home's two entry actions (`src/screens/home/index.tsx`) are circular, side by side, sized via `computeEntrypointDiameter`/`computeEntrypointBuffer` (`src/lib/home/entrypointDiameter.ts`) — not a fixed diameter. Formula: `buffer = min(screenWidth, screenHeight) * ENTRYPOINT_BUFFER_PERCENT`, `diameter = (screenWidth - 2*buffer - gap) / 2`, where `gap` is `theme.spacing.xxl` and `ENTRYPOINT_BUFFER_PERCENT` (default `0.075`) lives in `src/config/constants.ts`. "Buffer" is read as screen-edge-to-circle-edge, scaled off the *shorter* screen side so the inset stays proportional across orientations — the longer side only affects diameter, not buffer size. Floored at `MIN_TOUCH_TARGET_DP` (48, matching `ux_principles.md`'s touch-target minimum) so a narrow/foldable screen can't shrink the circles below tappable.
+
+Each circle carries a visible text label (`AppButton`'s `size="circle"` variant, icon above label, both inside the circle) — not caption-below or icon-only: "Take Photos" (camera, `variant="primary"`) and "Upload Photos" (library, `variant="secondary"`).
