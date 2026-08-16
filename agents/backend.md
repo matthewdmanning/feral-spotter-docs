@@ -14,7 +14,8 @@ skills are off-limits" below before touching anything Firestore-shaped.
   version-gated off. See [ADR-0001](../adr/0001-firebase-auth-over-google-signin.md).
 - **Photo uploads**: direct client upload via `@react-native-firebase/storage`
   to `gs://feral-spotter-image-uploads`, path
-  `submissions/{uidHash}/{submissionId}/{fileName}`. See
+  `submissions/{uid}/{submissionId}/{fileName}` (raw Firebase Auth uid, not
+  a hash — see ADR-0005's 2026-08-16 amendment). See
   [ADR-0005](../adr/0005-firebase-storage-for-uploads.md).
 - **Firestore counter doc**: `/submissions/{submissionId}.photoCount`,
   written only by `functions/src/index.ts`'s Storage-trigger Cloud Functions

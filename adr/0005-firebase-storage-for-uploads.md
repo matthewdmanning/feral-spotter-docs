@@ -44,13 +44,10 @@ assumed.
 Design landed 2026-08-13, scoped **per submission** (matches `MAX_PHOTOS` in
 `src/config/constants.ts`, not a per-user lifetime total):
 
-- **Object path**: `submissions/{uidHash}/{submissionId}/{fileName}` — supersedes the
-  original `{uid}` convention (distinct from `upload+api.ts`'s
-  `uploads/{email}/{submissionId}/...`, which this replaces). `uidHash` is
-  `sha256(USER_ID_HASH_SALT + auth uid)`, computed client-side
-  (`hashUid()` in `src/lib/upload/firebaseUpload.ts`) and independently
-  recomputed by `storage.rules`/`firestore.rules` via the rules language's
-  `hashing.sha256()` — no Cloud Function round-trip, no new native module.
+- **Object path**: `submissions/{uid}/{submissionId}/{fileName}` — `uid` is the
+  signed-in Firebase Auth uid directly. See the 2026-08-16 amendment below;
+  this superseded an interim hashed-path design that lived here 2026-08-13
+  through 2026-08-16.
 - **Counter**: Firestore doc `/submissions/{submissionId}`, field `photoCount`,
   maintained by `functions/src/index.ts`'s `onSubmissionPhotoUploaded` /
   `onSubmissionPhotoDeleted` Storage triggers (Admin SDK, bypasses rules — the
@@ -73,6 +70,28 @@ Design landed 2026-08-13, scoped **per submission** (matches `MAX_PHOTOS` in
 Tester allowlist enforcement is still open — not addressed by this change. Custom
 claims or a Firestore-backed lookup would extend the same `firestore.get()` mechanism,
 but that isn't designed here.
+
+## Amendment 2026-08-16: dropped the uid hash, raw uid in the object path
+
+The salted-hash scheme above (`uidHash = sha256(USER_ID_HASH_SALT + uid)`,
+`ownerUidHash` field) is reverted. `storage.rules`, `firestore.rules`,
+`firebaseUpload.ts`, and `functions/src/index.ts` all now use the raw
+Firebase Auth `uid` directly — path segment `submissions/{uid}/...`,
+Firestore field `ownerUid`.
+
+Reasoning (Matthew, 2026-08-16): a Firebase Auth uid is already an opaque,
+third-party-issued identifier, not PII on its own — hashing it added no
+real privacy benefit over what Firebase Auth already provides. Having the
+raw uid in the object path is also useful on its own: it lets a future
+"delete my data" request locate a user's objects directly, without needing
+to recompute the same salt+hash the client used.
+
+This also incidentally resolves an unverified risk the original design
+carried: whether the rules language's `hashing.sha256().toHexString()`
+byte-for-byte matched `expo-crypto`'s `digestStringAsync` output was never
+confirmed (the rules test suite couldn't run locally at the time — JDK 17
+vs. firebase-tools' JDK 21 requirement). That's moot now; there's no
+cross-language hash to agree on.
 
 ## Considered Options
 
