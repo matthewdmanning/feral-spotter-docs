@@ -1,6 +1,6 @@
 # Emulators and On-Device Testing
 
-This is the authoritative document for **test drives** -- tesing app functionality using emulators or physical devices. This document does not address testing code, such as jest.
+This is the authoritative document for **test drives** — testing app functionality using emulators or physical devices. This document does not address testing code, such as Jest.
 
 ## Documenting Test Drives
 
@@ -9,6 +9,26 @@ Reports must be filed under `docs/test-drives`. Any screen captures must be save
 ## Every emulator run
 
 Check that PostHog analytics only fires with consent (unchecking analytics-consent must prevent `PostHogProvider` from mounting — no `posthog`/`[analytics]`/`captureEvent(`/`captureException(`/`fireAnalyticsEvent`). **Note the channel:** these calls surface in Metro's JSONL log (`.expo/dev/logs/start.log`, `metro:client_log` entries), not in `adb logcat` — `logcat` will show nothing even when the check is failing. Also check that GPS/location capture is actually firing (`startLocationCapture`/`[location]`/`FusedLocationProvider`/`GnssLocationProvider`/`LocationManagerService`/`watchPositionAsync`) — this one genuinely is in `logcat`, unfiltered (not pid-scoped — the location provider logs come from system processes, not the app's own pid). Write findings to a dated file in `docs/test-drives/run-notes/` (create the folder on first use). Every file written or updated during an emulator run — run-notes, punchlists, any other working doc — must record the git state it was tested against (`git rev-parse HEAD` + `git branch --show-current`) near the top.
+
+## Before every physical-device/emulator run: enable Firebase debug logging
+
+Native Firebase SDK logs (Storage, Auth) are silent by default — a failed
+`putFile` can produce zero logcat output even when it never reached the
+network. Set these before driving (resets on device reboot, not
+persistent):
+
+```
+adb shell setprop log.tag.FirebaseStorage DEBUG
+adb shell setprop log.tag.FirebaseAuth DEBUG
+adb shell setprop log.tag.FirebaseApp DEBUG
+adb shell setprop log.tag.FA VERBOSE
+adb shell setprop log.tag.FA-SVC VERBOSE
+adb shell setprop debug.firebase.analytics.app com.mmanning.feralspotter
+```
+
+The last line also enables Firebase Analytics DebugView for this package
+(`firebase.google.com/docs/analytics/android/get-started`) — useful when
+checking whether analytics events fired at all, independent of PostHog.
 
 ## Device/environment notes (accumulated from test-drive sessions)
 
@@ -32,10 +52,3 @@ Check that PostHog analytics only fires with consent (unchecking analytics-conse
   had to reopen it).
 - (Established 2026-08-09, Pixel 7 physical device, branch `main` @
   `780da4606c396fbdb5fbe7752c189a72aedbfe1a`.)
-- `expo run:android` builds only the ABI(s) of whatever device is connected
-  *when the build starts* (e.g. `x86_64` for an emulator), then fails to
-  install with `INSTALL_FAILED_NO_MATCHING_ABIS` on a different-ABI target
-  (e.g. `arm64-v8a` physical devices). If the target device changes
-  mid-build (emulator closed, physical device connected), rebuild rather
-  than reinstalling the existing APK. Check the connected device's ABI
-  first with `adb shell getprop ro.product.cpu.abi`.
