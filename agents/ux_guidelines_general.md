@@ -22,6 +22,8 @@ Don't let a significant action hide behind a small, skippable control. Default i
 
 "Judgement call" values — timings, counts, thresholds — belong in a config file as named constants, not hardcoded inline and not exposed as a user-facing setting. Example: how long an undo affordance stays visible, or how many items show in a list at once.
 
+Keep these constants together in a dedicated, human-readable file separate from the implementation that uses them — not scattered inline across feature code — so they're easy to find and edit without reading the surrounding logic.
+
 ## Confirmations & destructive actions
 
 Irreversible actions need a confirm dialog: cancel option first, destructive option visually distinct. For a low-risk action whose confirmation would otherwise repeat needlessly, allow a persistent "don't ask again" opt-out — the default is always to confirm.
