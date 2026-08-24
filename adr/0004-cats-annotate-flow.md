@@ -76,6 +76,33 @@ carry boxes for more than one cat.
   (post-MVP, not yet built) extension is a button on Cat Form to
   re-enter `annotate` for an already-described cat.
 
+## Amendment 2026-08-24: accepted orphans are scoped to a live draft
+
+The "discard box data on mid-pass abandonment" option above accepts orphaned
+boxes because "keeping orphaned data costs nothing extra." That reasoning holds
+**within a live draft** — one abandoned pass, boxes the user may still return
+to — and is retained for that case.
+
+It was never a decision about teardown. What the original option did not
+contemplate:
+
+- **Permanent accumulation across every submitted draft.** Nothing cleared
+  `bounding-box-store` on Submit or Reset, so box geometry from every
+  submission the device had ever made stayed in AsyncStorage forever. That is
+  not "costs nothing extra"; it is unbounded growth.
+- **A stale `activeCatId` reattaching a previous draft's boxes.** Only a Cat
+  Form *save* cleared the id, so backing out of Boxing Complete left it set.
+  A Reset then wiped cats and photos but not that id, and the next draft's
+  first box reused it — surfacing a previous draft's boxes against photos that
+  no longer existed.
+
+Narrowed accordingly: orphans are accepted **within a live draft**, never
+across teardown. Both teardown verbs clear `bounding-box-store` and
+`active-cat-flow-store` outright — see
+[ADR-0006](0006-submission-draft-boundary.md), issue #292. The "cleanup/GC
+pass" this option flagged as possibly needed later is that teardown, and it is
+now built.
+
 See spec: `docs/planning/grilling/2026-08-04-cats-annotate-flow-spec.md`
 (published as [issue #169](https://github.com/matthewdmanning/feral-spotter/issues/169)).
 Originating wayfinder map: [#167](https://github.com/matthewdmanning/feral-spotter/issues/167).
