@@ -69,6 +69,15 @@ the seam re-opens that race. Validation, `waitForUploads`, the metadata upload,
 the `Sending`/`Failed` transitions and their analytics events also stay: they
 are submit-flow concerns, not draft-lifetime ones.
 
+Each caller navigating for itself is what lets Settings' **Clear Draft** be an
+escape pod. It is reachable *while a draft is live*, with Cat List, `annotate`
+and the create screen all mounted behind Settings against state it just
+emptied — and the create screen's mount effect won't re-run to notice. So it
+routes Home (`router.replace('/')`) rather than popping back into them, the
+same destination Submit and Reset use. A seam that owned navigation would have
+to guess that; a seam that doesn't lets each caller say where "after this"
+is.
+
 ## `start` is deliberately unowned
 
 There is no `startDraft()`. `usePhotoStore` mints the submission id atomically
