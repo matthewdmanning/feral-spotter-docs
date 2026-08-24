@@ -83,8 +83,11 @@ follows that work — the boundary is defined for teardown first, on purpose.
 - A fifth draft-owned store must be added to `tearDownDraftState()`; the
   invariant test in `src/lib/submission/__tests__/draft.invariant.test.ts`
   fails otherwise, since it reads storage rather than a maintained key list.
-- Settings' **Clear History** is the third caller, and calls `discardDraft()`.
+- Settings' **Clear Draft** is the third caller, and calls `discardDraft()`.
   It replaces a **Clear Cache** button that was a no-op: it removed
-  `@feralspotter_cache`, a key nothing ever wrote.
+  `@feralspotter_cache`, a key nothing ever wrote. #292 called the replacement
+  "Clear History"; that name was rejected on landing because the button clears
+  the draft and deliberately leaves history rows alone — the label has to name
+  what a destructive button actually destroys.
 - `clearAllStores()`, `PERSISTED_STORE_KEYS` and `src/utils/cache.ts` are
   deleted — all zero-caller, all encoding a stale idea of what a draft is.
