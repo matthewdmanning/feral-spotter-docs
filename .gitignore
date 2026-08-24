@@ -3,5 +3,9 @@
 .claudian/
 .smart-env/
 
+# Local Files
+*local*
+.local/*
+
 # Logs
 *.log
