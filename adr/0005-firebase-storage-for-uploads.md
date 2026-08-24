@@ -93,6 +93,36 @@ confirmed (the rules test suite couldn't run locally at the time — JDK 17
 vs. firebase-tools' JDK 21 requirement). That's moot now; there's no
 cross-language hash to agree on.
 
+## Amendment 2026-08-24: no metadata, no photo
+
+Policy, decided alongside [#292](https://github.com/matthewdmanning/feral-spotter/issues/292):
+**a photo object with no submission metadata referencing it has no reason to
+exist and is deleted.** A photo uploads as soon as it is captured, before the
+user has committed to submitting anything, so an abandoned or Reset draft
+leaves objects in the bucket that no `metadata.json` will ever point at. Those
+are the orphans this closes.
+
+Enforcement is two-layered, because neither layer alone is sufficient:
+
+- **Scheduled server-side sweep** — the authority. Deletes photo objects with
+  no referencing metadata after a grace period. It is the only layer that
+  catches a client that was killed, went offline permanently, or was
+  uninstalled mid-draft.
+- **Client best-effort delete on teardown** — an optimisation, not a guarantee.
+  It reclaims the common case immediately instead of waiting for the sweep.
+
+Note that `storage.rules` denies client deletes today: on a delete
+`request.resource` is null, so both `isValidMetadataWrite()` and
+`isValidPhotoWrite()` error and the rule fails closed. The client layer
+therefore needs an explicit delete rule before it can do anything at all.
+
+Implementation is filed as
+[#293](https://github.com/matthewdmanning/feral-spotter/issues/293); the draft
+teardown seam this hangs off is
+[ADR-0006](0006-submission-draft-boundary.md). This closes the residual gap
+this ADR left open: the bucket has a defined lifetime rule for photo objects,
+not just an upload path.
+
 ## Considered Options
 
 - **Keep the custom `upload+api.ts` route** — rejected: no resumable/retry story,
