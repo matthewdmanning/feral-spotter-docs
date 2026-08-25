@@ -17,9 +17,16 @@ Check that PostHog analytics only fires with consent (unchecking analytics-conse
   session, 2026-08-09, root cause unresolved). `CI=1` disables Fast
   Refresh, so code changes need a fresh `npm run android` / Metro restart
   to see, not a reload.
-- `EXPO_PUBLIC_AUTH_MOCK=true` in local dev envs — sign-in/profile behavior
-  during manual testing is mocked, not production auth. Check `.env.local`
-  before trusting any auth-flow observation as representative.
+- **Backend mode is three-way: mock / emulator / live.** The documented
+  default for a test drive is the Firebase Local Emulator Suite
+  (`EXPO_PUBLIC_USE_FIREBASE_EMULATOR=true` + `firebase emulators:start`) —
+  see [backend.md](backend.md) for the flags and why live-Firebase
+  test-driving is discouraged. `EXPO_PUBLIC_AUTH_MOCK=true` in local dev
+  envs means sign-in/profile behavior is mocked and skips Firebase
+  entirely, so it can never verify rules or real Auth behavior. Check
+  `.env.local` **and** the app's startup mode log before trusting any
+  auth-flow or upload observation as representative — the three modes look
+  alike in the UI.
 - Screen-state verification technique: `adb shell uiautomator dump` +
   `adb pull` (prefix with `MSYS_NO_PATHCONV=1` in git-bash, or
   `/sdcard/...` paths get mangled into Windows paths), parse
@@ -33,7 +40,7 @@ Check that PostHog analytics only fires with consent (unchecking analytics-conse
 - (Established 2026-08-09, Pixel 7 physical device, branch `main` @
   `780da4606c396fbdb5fbe7752c189a72aedbfe1a`.)
 - `expo run:android` builds only the ABI(s) of whatever device is connected
-  *when the build starts* (e.g. `x86_64` for an emulator), then fails to
+  _when the build starts_ (e.g. `x86_64` for an emulator), then fails to
   install with `INSTALL_FAILED_NO_MATCHING_ABIS` on a different-ABI target
   (e.g. `arm64-v8a` physical devices). If the target device changes
   mid-build (emulator closed, physical device connected), rebuild rather

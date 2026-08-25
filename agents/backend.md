@@ -30,6 +30,54 @@ skills are off-limits" below before touching anything Firestore-shaped.
 - **Tester allowlist / abuse limits on uploads**: not enforced yet — open
   follow-up issues #267–#270 from the PR #271 security-rules audit.
 
+## Test-drive posture: emulator by default
+
+Test drives run against the **Firebase Local Emulator Suite**, not live
+Firebase. Live-project test-driving risks real user data and produces
+infrastructure-level errors that have nothing to do with the code under
+test — a 412 bucket-permission error once cost a session's debugging time
+at the wrong layer. Ports come from `firebase.json` as-is (Auth `9099`,
+Storage `9199`); emulator mode needs **no change** to
+`storage.rules`/`firestore.rules`, so it exercises the actually-deployed
+rules.
+
+Start the suite (`firebase emulators:start`), then set:
+
+| Env var                              | Value                 | Notes                                                                                   |
+| ------------------------------------ | --------------------- | --------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_USE_FIREBASE_EMULATOR`  | `true`                | Off by default, never inferred from `__DEV__`                                           |
+| `EXPO_PUBLIC_FIREBASE_EMULATOR_HOST` | `localhost` (default) | Use `10.0.2.2` on an Android emulator; `localhost` + `adb reverse` on a physical device |
+
+Wired in `src/lib/auth/firebaseAuthProvider.ts` (`connectAuthEmulator`) and
+`src/lib/upload/firebaseUpload.ts` (`connectStorageEmulator`). Both log the
+active mode at startup and **fail fast** if the flag is set but the suite
+isn't reachable — they never silently fall through to live Firebase. Read
+that startup line before trusting any auth/upload observation: mock,
+emulator and live are three different modes and their logs look alike.
+
+`EXPO_PUBLIC_AUTH_MOCK` / `EXPO_PUBLIC_UPLOADS_MOCK` still exist as a
+third, fully-offline mode for UI work. They skip Firebase entirely, so
+they can never verify rules or real Auth/Storage behavior — don't reach
+for them when the backend is what's under test.
+
+## Where a Node-side Auth/Storage test goes
+
+Use the existing lane — don't invent a second one:
+`@firebase/rules-unit-testing` + `jest.rules.config.js` (plain-Node
+`testEnvironment`) + `__tests__/rules/`, run via `npm run test:rules`.
+That lane never loads the React Native native module, which is why it can
+talk to a real emulator.
+
+The root `__mocks__/@react-native-firebase/{app,auth,storage}.js` stubs are
+a **hard platform requirement**, not a design choice: under Jest's RN
+preset there is no native module and no bridge, so there is nothing for an
+emulator to stand behind. The emulator suite cannot and does not replace
+them — do not delete them. Emulator mode is a full-app test-drive concern
+only.
+
+For test-drive _mechanics_ (device setup, logging channels, per-run
+checks), see [test-driving.md](test-driving.md).
+
 ## Firestore skills are off-limits
 
 Never load `firebase:firebase-firestore` or any other skill scoped to
