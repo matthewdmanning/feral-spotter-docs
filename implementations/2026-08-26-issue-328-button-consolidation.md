@@ -102,4 +102,20 @@ The touch-target guard from #325 keeps its value here — with buttons routed th
 
 - [ ] The ~10 screen-level buttons still carry their own styles. Worth doing when someone is already in those screens, not as a sweep of its own.
 - [ ] The centred-dialog shell (cluster 2) remains open under #328.
-- [ ] Per-suite unistyles mocks each cover a different slice of the API. A shared mock would stop the next component change tripping over the same class of gap.
+- [x] Per-suite unistyles mocks each covered a different slice of the API. Resolved — see the update below.
+
+## Implementation updates
+
+### 2026-08-26 — fix
+
+**Purpose:** All 25 suites hand-rolled their own `react-native-unistyles` mock, each covering only the slice of the API its component happened to touch. That is a mock of current usage rather than of the library, so it breaks whenever a component starts using something else — which is exactly how adding `AppButton` to `ErrorBoundary` produced `styles.useVariants is not a function`. Only 2 of the 25 provided `useVariants`, so the same gap was latent in 23 more, and one still mocked `createStyleSheet`, a Unistyles v2 API that no longer exists.
+
+**Change:** Added `__mocks__/react-native-unistyles.js`, covering the whole surface the app imports — `StyleSheet` (with `configure` and variant support), `useUnistyles`, `withUnistyles`, `UnistylesRuntime`. Jest applies it automatically, since the real module is a node module and this directory sits beside `node_modules`. Removed the inline mock from all 24 suites that had one; `themeMode.test.ts` keeps its own, because it asserts on what reaches `StyleSheet.configure` and needs to capture those calls.
+
+404 lines of duplicated mock deleted, replaced by 121 lines in one place.
+
+**Assessment first:** the tests themselves were checked against the load-bearing standard before any of this, since the alternative was deleting them. They hold — they cover crash-reporting consent gating, camera and location permission gates, auth flows, routing gates, the location-commit invariant, and named regressions (#202, #225, #299, #314). These are real user-facing failures, not restatements of implementation. Kept and repaired rather than removed.
+
+**Verification:** the shared mock was mutation-checked rather than assumed to matter — removing `useVariants` fails 5 suites and 22 tests; stubbing the numeric tokens out of the theme fails 5 suites and 20 tests. Full run stays at 56 suites and 257 tests, with typecheck and lint unchanged.
+
+The mock is plain JavaScript, matching the other files in `__mocks__/`. A `.tsx` version was written first and rejected: tsconfig includes every `.ts`/`.tsx` outside `__tests__`, so it entered the typecheck without jest's globals in scope and produced eight `Cannot use namespace 'jest' as a value` errors.

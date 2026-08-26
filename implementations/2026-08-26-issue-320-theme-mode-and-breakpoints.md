@@ -107,6 +107,13 @@ Each assertion was checked by mutation rather than assumed load-bearing:
 
 ## Follow-ups and known limitations
 
-- [ ] `src/lib/cache/storage.ts` still carries a comment saying MMKV is retained for a theme read "being migrated away from separately". That migration is no longer planned — the synchronous read is now the real mechanism. Comment left for a pass that owns that file.
+- [x] `src/lib/cache/storage.ts` carried a comment saying MMKV was retained for a theme read "being migrated away from separately". Corrected — see the update below.
 - [ ] Breakpoints are registered but adopted on one screen. #326 should apply the convention where screens actually need it rather than mechanically everywhere.
 - The Settings screen still has no test of its own. Unchanged by this work, noted because the Appearance card is the second piece of interactive state on it.
+
+## Implementation updates
+
+### 2026-08-26 — fix
+
+**Purpose:** `src/lib/cache/storage.ts` described the MMKV theme read as vestigial and slated for removal. That stopped being true when this work made it the persistence path behind the System/Light/Dark control, and the stale note invited someone to delete a dependency the theme now needs.
+**Change:** Rewrote the comment to state why the read must be synchronous — Unistyles resolves the initial theme before first render, so an AsyncStorage read would paint the wrong theme and then flip it — and that MMKV therefore stays.
