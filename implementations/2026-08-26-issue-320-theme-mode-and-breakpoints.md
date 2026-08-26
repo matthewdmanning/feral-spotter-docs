@@ -98,11 +98,11 @@ Each assertion was checked by mutation rather than assumed load-bearing:
 
 ## Graveyard: pivots and corrections
 
-### Prettier would have reformatted a file this change barely touches
+### The column-aligned `.styles.ts` layout is legacy, not policy
 
-- **Finding:** Running Prettier over `src/screens/settings/index.styles.ts` explodes its column-aligned single-line style entries into 135 lines of churn, against a one-line edit.
-- **Impact:** That alignment is the convention in every `.styles.ts` file in the repo, and the repo's own `format-changed.mjs` skipped silently because `PRETTIER_BASE` was unset, so nothing caught this automatically.
-- **Resolution:** The styles file keeps its existing formatting. Prettier was applied only to the `.tsx` and test files, where it is a no-op beyond an import wrap.
+- **Finding:** Prettier expands `src/screens/settings/index.styles.ts` from column-aligned single-line entries into 138 changed lines, against a one-line edit. The first read of that was wrong — the alignment appears in every `.styles.ts` file, so it looked like a deliberate convention worth preserving, and the change was initially kept out of Prettier's way on that basis.
+- **Impact:** `.githooks/pre-commit` runs Prettier over staged files unconditionally, so it reformatted the file at commit time regardless. The alignment is legacy formatting that predates the hook, not a convention — any `.styles.ts` file touched from here on will be expanded the same way. `npm run format` is the misleading part: it delegates to `format-changed.mjs`, which skips silently when `PRETTIER_BASE` is unset, so running it by hand suggests the file is fine when the commit hook disagrees.
+- **Resolution:** The expanded formatting is what shipped, and the whole file is now Prettier-clean. Anyone diffing this commit should expect the styles file to look larger than the change warrants; only `inner` and its comment are substantive.
 
 ## Follow-ups and known limitations
 
