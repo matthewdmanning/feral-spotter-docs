@@ -117,3 +117,35 @@ visibility gate (`HomeScreen.entrypointActions.model.test.tsx`).
 ## Follow-ups and known limitations
 
 - Device/emulator verification of the staleness gate not done this session.
+
+## 2026-08-25 — fix
+
+**Purpose:** Clear Draft deleted the cache row and returned Home, but Home
+still offered Continue Observation, and tapping it dead-ended on annotate's
+"No photos to review." (#314)
+
+**Change:** `src/screens/home/index.tsx` re-reads
+`getAllSubmissionCaches()` on every focus rather than once on mount, gated on
+`useIsFocused()`.
+
+**Load-bearing landmines:**
+
+- **`discardDraft()` was never the defect.** Force-stopping and relaunching
+  made the phantom entry disappear, so the row had in fact been deleted. The
+  fault was Home's view of the result, not the teardown seam. Anyone reopening
+  this should not go looking at `lib/submission/draft.ts`.
+- **Home and Settings are sibling tabs** (`src/app/(home-tabs)/`), so moving
+  between them is a tab switch, not a mount. A mount-once effect never re-runs.
+  Reset only escaped the bug because its navigation path unmounts Home.
+- **The bug ran both ways.** A draft started and returned from also left the
+  entry *hidden*. Both directions are device-verified.
+- **The cleanup's `cancelled` flag is not decoration.** Two focus cycles can
+  resolve out of order and let the older read win. Removing it reintroduces a
+  race that the mount-once version could not exhibit.
+- `HomeScreen.resumeEntry.test.tsx`'s third case (`does not re-read while
+  blurred`) passes against the pre-fix code too — it guards blur cancellation,
+  not the staleness. Do not read it as regression cover for #314.
+
+**Verification:** full gates pass. Device-verified on a Pixel 7 — the issue's
+own repro (draft → Settings → Clear Draft → confirm) now leaves Home with only
+Take Photos / Upload Photos, from an already-mounted Home.
