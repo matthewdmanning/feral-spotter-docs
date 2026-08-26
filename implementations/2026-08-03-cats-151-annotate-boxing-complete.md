@@ -60,3 +60,42 @@ file touched by this issue).
 (`glob` for annotate tests came back empty before and after this
 change) — worth flagging if #144's on-device pass gets scheduled, since
 this is a navigation-affecting screen change.
+
+## 2026-08-25 — fix
+
+**Purpose:** On a one-photo submission, confirming the only box landed the user
+on Home instead of the Cat Form, and left the draft behind with no sign the
+pass had failed (#316).
+
+**Change:** `handleBoxingComplete` in `src/hooks/useActiveCatFlow.ts` reads
+`activeCatId` fresh via `useActiveCatFlowStore.getState()` instead of the
+subscribed value.
+
+**Load-bearing landmines:**
+
+- **The mint and the completion happen in the same tick.**
+  `useAnnotatePass.handleConfirmBox` calls `handleBoxConfirmed` (which mints the
+  cat via `setActiveCatId`) and then, on the last photo, `handleBoxingComplete`
+  — with no render in between. The subscribed `activeCatId` is still the
+  pre-mint `null`, so the guard took the no-active-cat branch and abandoned.
+- **Two or more photos hide it.** `Confirm` on any non-last photo advances the
+  carousel instead, letting state settle across a render. Only a pass whose
+  *first* evidence lands on the *last* photo is affected — in practice, a
+  one-photo submission. Any test or drive using multiple photos will pass
+  against the broken code.
+- **`getBoxedPhotoIds` was never implicated.** It reads through `get().boxes`
+  and already saw the box just added. Only the one subscribed value was stale.
+- **`handleNotInPhoto` reaches this function the same way and is correct as-is.**
+  A pass carrying only an absence mark has no boxes, so abandoning is the
+  intended outcome there. Do not "fix" that path to match.
+- This is the same stale-subscribed-value class that `clearActiveCatIfMatches`
+  warns about one function above. Treat any value read inside a same-tick
+  handler chain in this file as suspect.
+
+**Tests:** new case in `src/hooks/__tests__/useActiveCatFlow.model.test.ts`
+confirms a box and completes the pass inside a single `act()`. Verified to fail
+against the previous implementation and pass against this one.
+
+**Verification:** full gates pass (248 tests). Device-verified on a Pixel 7 —
+the one-photo repro now routes `/submission/annotate` → `/submission/cats`.
+Pre-existing on `main`; not introduced by #299 or #314.
