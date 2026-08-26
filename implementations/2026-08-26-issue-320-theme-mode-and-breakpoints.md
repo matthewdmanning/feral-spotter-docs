@@ -117,3 +117,10 @@ Each assertion was checked by mutation rather than assumed load-bearing:
 
 **Purpose:** `src/lib/cache/storage.ts` described the MMKV theme read as vestigial and slated for removal. That stopped being true when this work made it the persistence path behind the System/Light/Dark control, and the stale note invited someone to delete a dependency the theme now needs.
 **Change:** Rewrote the comment to state why the read must be synchronous — Unistyles resolves the initial theme before first render, so an AsyncStorage read would paint the wrong theme and then flip it — and that MMKV therefore stays.
+
+### 2026-08-26 — fix
+
+**Purpose:** Making the light theme reachable exposed a component that had never had to work in it. `ValidationSheet` hardcoded its error and warning card fills as `#2A1515` and `#2A2510` — dark-only tints — while its text correctly used `theme.colors.text`. In light theme that resolves to `#0F172A` on `#2A1515`: near-black on near-black, leaving the validation error list unreadable. This is the first real defect the theme work surfaced, and the reason the light theme being unreachable mattered.
+**Change:** Added `dangerSurface` and `warningSurface` to both themes and pointed `cardError`/`cardWarn` at them. Dark keeps the exact values that were hardcoded, so dark is visually unchanged; light gets pale washes (`#FEF2F2`, `#FFFBEB`) that the near-black light text reads against comfortably. Recorded against #327, which owns hardcoded component colour generally — two further instances (`ErrorBoundary`'s `#FF6B6B`, `PhotoPreviewModal`'s annotation blue) are noted there and left alone.
+
+No test. The change is four token values and two references; a test asserting `cardError` uses `theme.colors.dangerSurface` would restate the implementation. The general guard — no hardcoded colour in a stylesheet — cannot be written without a maintained allowlist, since several hardcoded colours are deliberate (the camera screen's black, `shadowColor: '#000'`, the photo viewer's opaque backdrop), and the testing policy warns off exactly that shape. Catching this class properly needs the #329 device sweep in all three theme modes.
