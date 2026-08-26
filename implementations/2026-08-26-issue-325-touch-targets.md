@@ -102,6 +102,12 @@ Mutation results:
 - **Impact:** An entire class of file was invisible to the check while it reported green — the same failure as the first, in a different disguise.
 - **Resolution:** The pattern now accepts any run of spaces after the colon. Both mutants fail as expected. Worth noting that neither gap was visible by reading the test; both surfaced only by deliberately breaking the code it guards.
 
+### The commit is far larger than the change
+
+- **Finding:** The pre-commit hook runs Prettier over staged files, and eight of the stylesheets touched here were still in the older column-aligned layout. Committing them expanded each one wholesale.
+- **Impact:** The diff reads as 525 insertions against roughly twenty lines of actual change. Same cause as the reformat recorded in the theme-mode note from the same day.
+- **Resolution:** Left as-is — the expansion is what the repo's own hook wants. Anyone reviewing this commit should read the `minHeight`, `justifyContent`, and `hitSlop` additions and treat the rest as formatting. Note that the guard test still tolerates the aligned layout, because stylesheets untouched by this work remain in it.
+
 ### The static estimate of rendered height was abandoned
 
 - **Finding:** An early pass tried to compute every element's rendered height from padding plus estimated content size. It produced 36 apparent violations, most of them wrappers being credited with their children's dimensions.
