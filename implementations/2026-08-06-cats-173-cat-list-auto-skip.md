@@ -104,3 +104,27 @@ reproduced the bug pre-fix (landed on annotate's empty state after
 Reset), then reproduced the fix post-fix (lands on Home, `RKStorage`
 dump confirms `cats:[]`/`photos:[]`) via a forced Metro reload between
 each attempt.
+
+## 2026-08-25 — extension
+
+**Purpose:** #299 made zero-cats a state a user can deliberately reach, which
+the mount-time auto-skip gate treated identically to arriving with nothing
+recorded.
+
+**Change:** the gate is now
+`useState(() => cats.length === 0 && removed !== '1')`, and the render's
+early return is `cats.length === 0 && autoSkipPending`. Removing the last cat
+renders the annotate-or-describe empty state instead of redirecting. Details in
+[[2026-08-25-issue-299-remove-a-saved-cat]].
+
+**Load-bearing landmines:**
+
+- **Both halves of the render guard are needed.** `autoSkipPending` is frozen at
+  mount, so `if (autoSkipPending) return null` alone would blank the screen
+  forever if the user returns with cats added while it stays mounted.
+- **Lazy `useState`, not `useRef`.** The render reads it to choose between
+  "redirect in flight" and "empty state," and reading a ref during render is a
+  React Compiler violation. The mount-time snapshot semantics are unchanged —
+  #189's reason for not watching `cats.length` live still holds.
+- **First-pass auto-skip is unchanged and must stay that way.** Arriving with
+  nothing recorded still replaces into annotate; only the removal path opts out.
